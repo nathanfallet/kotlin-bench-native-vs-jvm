@@ -1,0 +1,39 @@
+--- a/src/commonMain/kotlin/bench/Geometry.kt	2026-09-30 21:45:46
++++ b/src/commonMain/kotlin/bench/Geometry.kt	2026-09-30 21:45:46
+@@ -4,13 +4,23 @@
+ import kotlin.math.min
+ import kotlin.math.sqrt
+ 
+-/** Immutable block position. Like vanilla, the code allocates a new one for every neighbour lookup. */
+-data class BlockPos(val x: Int, val y: Int, val z: Int) {
++/**
++ * Block position packed into one Long, as a value class: no object is allocated unless the position is
++ * stored in a generic container or a nullable variable. Same API as the data class it replaces.
++ */
++@kotlin.jvm.JvmInline
++value class BlockPos(val packed: Long) {
++    constructor(x: Int, y: Int, z: Int) : this(packBlockPos(x, y, z))
++
++    val x: Int get() = (packed shr 38).toInt()
++    val y: Int get() = ((packed shl 52) shr 52).toInt()
++    val z: Int get() = ((packed shl 26) shr 38).toInt()
++
+     fun above() = BlockPos(x, y + 1, z)
+     fun below() = BlockPos(x, y - 1, z)
+     fun offset(dx: Int, dy: Int, dz: Int) = BlockPos(x + dx, y + dy, z + dz)
+     fun relative(direction: Direction) = BlockPos(x + direction.dx, y + direction.dy, z + direction.dz)
+-    fun asLong(): Long = ((x.toLong() and 0x3FFFFFF) shl 38) or ((z.toLong() and 0x3FFFFFF) shl 12) or (y.toLong() and 0xFFF)
++    fun asLong(): Long = packed
+     fun distSqr(other: BlockPos): Int {
+         val dx = x - other.x
+         val dy = y - other.y
+@@ -19,6 +29,9 @@
+     }
+ }
+ 
++fun packBlockPos(x: Int, y: Int, z: Int): Long =
++    ((x.toLong() and 0x3FFFFFF) shl 38) or ((z.toLong() and 0x3FFFFFF) shl 12) or (y.toLong() and 0xFFF)
++
+ enum class Direction(val dx: Int, val dy: Int, val dz: Int) {
+     DOWN(0, -1, 0), UP(0, 1, 0), NORTH(0, 0, -1), SOUTH(0, 0, 1), WEST(-1, 0, 0), EAST(1, 0, 0);
+ 

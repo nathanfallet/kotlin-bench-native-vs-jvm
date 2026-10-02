@@ -1,0 +1,15 @@
+[package]
+name = "bench-rust"
+version = "0.1.0"
+edition = "2021"
+description = "Rust port of the micro-benchmarks, used as a third column next to Kotlin/JVM and Kotlin/Native"
+publish = false
+
+[[bin]]
+name = "bench-rust"
+path = "src/main.rs"
+
+[profile.release]
+opt-level = 3
+lto = "fat"
+codegen-units = 1
